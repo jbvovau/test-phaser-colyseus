@@ -5,7 +5,7 @@ import * as Colyseus from "colyseus.js";
 
 //server
 var client: Colyseus.Client;
-var roomName = "chat_room";
+var roomName = "poke_room";
 var room:Colyseus.Room<any>;
 
 //game

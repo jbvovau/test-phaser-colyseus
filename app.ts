@@ -31,7 +31,7 @@ class ClientGame {
 
         //let client = new Colyseus.Client ('ws://qno.fr:3553');
         this.client = client;
-        var roomName = "chat_room";
+        var roomName = "poke_room";
         var room = client.join(roomName);
 
         //new people on room

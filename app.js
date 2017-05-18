@@ -10,7 +10,7 @@ var ClientGame = (function () {
         var client = new Colyseus.Client(server_uri);
         console.log("connect to server :", server_uri);
         this.client = client;
-        var roomName = "chat_room";
+        var roomName = "poke_room";
         var room = client.join(roomName);
         room.onJoin.add(function () {
             console.log(client.id, "joined", roomName);

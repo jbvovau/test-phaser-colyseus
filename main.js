@@ -4,7 +4,7 @@
 var Colyseus = require("colyseus.js");
 //server
 var client;
-var roomName = "chat_room";
+var roomName = "poke_room";
 var room;
 //game
 var game;
@@ -16,7 +16,7 @@ var isStopped;
 //cursors
 var cursors;
 /**
- * start connection
+ * start connection on colyseus server and listen to room
  *
  */
 function startConnection() {
@@ -29,7 +29,6 @@ function startConnection() {
     //I join chat room ?
     room.onJoin.add(function () {
         console.log(client, "joined", roomName);
-        console.log("new connection done, my id is : ", client.id);
     });
     //error
     room.onError.add(function () {
@@ -46,7 +45,7 @@ function startConnection() {
     });
     //add data
     room.onData.add(function (data) {
-        console.log(client.id, " [onData] received on", roomName, data.data.action);
+        console.log(client.id, " [onData] received on", roomName, data);
     });
     //new state
     room.onUpdate.add(function (newState) {
@@ -107,7 +106,6 @@ function startConnection() {
  * Send action
  */
 function sendActionToServer(data) {
-    data.id = client.id;
     client.send(data);
 }
 /**
@@ -160,14 +158,11 @@ function update() {
         isStopped = false;
     }
     else if (!isStopped) {
-        //console.log("updateState to stop ", this.my_id);
-        //if (this.my_sprite != null)this.my_sprite.body.velocity.set(0);
         if (my_sprite != null) {
         }
         isStopped = true;
     }
     if (!isStopped && nextMoveToServer < game.time.now) {
-        //console.log('up');
         if (my_sprite != null)
             sendActionToServer({ action: "go", x: my_sprite.x, y: my_sprite.y });
         nextMoveToServer = game.time.now + 10;
