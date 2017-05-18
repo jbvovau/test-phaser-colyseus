@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "es6",
         "noImplicitAny": true,
         "sourceMap": true ,
         "removeComments": true,
@@ -9,7 +9,6 @@
         "allowJs": false
     },
     "files": [
-        "app.ts",
         "main.ts"
     ]
 }

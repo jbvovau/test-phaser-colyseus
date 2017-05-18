@@ -1,6 +1,7 @@
+"use strict";
 ///<reference path="lib/phaser.d.ts"/>
 ///<reference types="colyseus.js"/>
-"use strict";
+//exports.__esModule = true;
 var Colyseus = require("colyseus.js");
 //server
 var client;
@@ -9,7 +10,10 @@ var room;
 //game
 var game;
 var sprites;
+var walls;
 var state;
+var landscapeCreated;
+//game state
 var players;
 var nextMoveToServer;
 var isStopped;
@@ -57,26 +61,25 @@ function startConnection() {
         for (var id in state.pokemons) {
             //get pokemon linked with player
             var pokemon = state.pokemons[id];
-            var sprite = players[id];
             if (players[id] == null) {
                 //player not knwon : create new sprite 
-                var sprite_1 = sprites.getFirstExists(false, true);
-                sprite_1.reset(pokemon.x, pokemon.y);
-                game.physics.enable(sprite_1, Phaser.Physics.ARCADE);
-                sprite_1.body.setSize(32, 32, 32, 32);
-                sprite_1.body.bounce.set(0.2);
-                sprite_1.frame = pokemon.frame; //sprite image
-                players[id] = sprite_1;
+                var sprite = sprites.getFirstExists(false, true);
+                sprite.reset(pokemon.x, pokemon.y);
+                game.physics.enable(sprite, Phaser.Physics.ARCADE);
+                sprite.body.setSize(32, 32, 32, 32);
+                sprite.body.bounce.set(0.2);
+                sprite.frame = pokemon.frame; //sprite image
+                players[id] = sprite;
             }
             else {
-                //update location (if sprite is not current player sprite)
-                if (id != client.id) {
-                    var xOffset = pokemon.x - sprite.x;
-                    var yOffset = pokemon.y - sprite.y;
-                    //ease other players movement
-                    game.add.tween(sprite).to({ x: pokemon.x, y: pokemon.y }, 100, Phaser.Easing.Linear.None).start();
-                }
             }
+        } // end foreach pokemons
+        //iterate walls
+        if (!landscapeCreated) {
+            landscapeCreated = true;
+            state.walls.forEach(function (element) {
+                var wall = walls.getFirstExists(false, true, element.x, element.y, 'wall');
+            });
         }
     });
     //listen to new entity (pokemon)
@@ -101,9 +104,21 @@ function startConnection() {
         delete players[id];
     });
     //attribute change
-    room.state.listen("pokemons/:id/:attribute", "remove", function (id, name, value) {
-        console.log("update pokemon attr " + id + "  " + name + " value = " + value + " ");
-        //_this.deletePokemon.dispatch(id);
+    room.state.listen("pokemons/:id/:attribute", "replace", function (id, name, value) {
+        //update location (if sprite is not current player sprite)
+        var sprite = players[id];
+        if (id != client.id && sprite != null) {
+            sprite[name] = value;
+            var offset = value - sprite[name];
+            //ease other players movement
+            var move = {};
+            move[name] = value;
+            game.add.tween(sprite).to(move, 50, Phaser.Easing.Linear.None).start();
+        }
+    });
+    //attribute change
+    room.state.listen("walls/:id/:attribute", "replace", function (id, name, value) {
+        console.log("update wall attr " + id + "  " + name + " value = " + value + " ");
     });
 }
 //-------------------
@@ -112,11 +127,11 @@ function startConnection() {
 function preload() {
     game.load.image('landscape', './assets/landscape.png');
     game.load.image('pika', 'assets/pika.png');
+    game.load.image('wall', 'assets/wall.png');
     game.load.spritesheet('pokemons', 'assets/pokesprites.png', 96, 96);
 }
 //create the game
 function create() {
-    startConnection();
     //start physics
     game.physics.startSystem(Phaser.Physics.ARCADE);
     players = {};
@@ -128,10 +143,16 @@ function create() {
     sprites.callAll('anchor.setTo', 0.5);
     sprites.createMultiple(16, 'pokemons');
     game.physics.enable(sprites, Phaser.Physics.ARCADE);
+    walls = this.game.add.group();
+    walls.createMultiple(5, 'wall');
+    game.physics.enable(walls, Phaser.Physics.ARCADE);
+    walls.setAll('body.immovable', true);
+    startConnection();
 }
 //update game : called at each frame (FPS)
 function update() {
-    var SPRITE_VELOCITY = 150;
+    game.physics.arcade.collide(sprites, walls);
+    var SPRITE_VELOCITY = 350;
     var xOffset = 0;
     var yOffset = 0;
     if (cursors.right.isDown) {
@@ -149,28 +170,26 @@ function update() {
     var my_sprite = players[client.id];
     if (my_sprite != null) {
         my_sprite.body.velocity.set(0);
+        //this.client.action({ action:"stop_velocity" });
     }
+    isStopped = true;
     if (xOffset != 0 || yOffset != 0) {
         //this.client.action( { action:"move", x: xOffset, y : yOffset });
         my_sprite.body.velocity.x = xOffset;
         my_sprite.body.velocity.y = yOffset;
         isStopped = false;
     }
-    else if (!isStopped) {
-        if (my_sprite != null) {
-        }
-        isStopped = true;
-    }
+    //send information of current sprite position every 20mms
     if (!isStopped && nextMoveToServer < game.time.now) {
         if (my_sprite != null)
             client.send({ action: "go", x: my_sprite.x, y: my_sprite.y });
-        nextMoveToServer = game.time.now + 10;
+        nextMoveToServer = game.time.now + 20;
     }
 }
 //render
 function render() {
 }
-//launch gate
+//launch game
 window.onload = function () {
     game = new Phaser.Game(16 * 32, 16 * 32, Phaser.AUTO, 'content', { preload: preload, create: create, update: update, render: render });
 };

@@ -4,11 +4,18 @@ var Room = require('colyseus').Room
 class PokeState {
   constructor(){
     this.pokemons = {};
+    this.walls = [];
+
+    this.walls.push(
+       {x:100, y:100},
+       {x:16, y:300}
+    );
   }
 
   toJSON(){
     return {
-      pokemons:this.pokemons
+      pokemons:this.pokemons,
+      walls:this.walls
     }
   }
 }
@@ -22,24 +29,25 @@ class ChatRoom extends Room {
 
     // // Call this function if you intend to implement delay compensation
     // // techniques in your game
-    // this.useTimeline()
+    //this.useTimeline(10)
 
     // Call game simulation at 60fps (16.6ms)
     this.setSimulationInterval( this.tick.bind(this), 1000 / 60 )
 
     this.setState(new PokeState());
 
+    //use diffent frame for diffent sprite
     this.pokemonFrame = 0;
   }
 
   requestJoin(options) {
     // only allow 10 clients per room
-    return this.clients.length < 10;
+    return this.clients.length < 3;
   }
 
   onJoin (client) {
     //add new pokemon
-    console.log(client.id, "joined ChatRoom!");
+    console.log(client.id, "joined room!");
     var x = Math.random() * 400;
     var y = Math.random() * 400;
     this.state.pokemons[client.id] =  ({
@@ -52,7 +60,6 @@ class ChatRoom extends Room {
     }) ;
 
     if (this.pokemonFrame > 650) this.pokemonFrame = 0;
-    //this.sendState(client);
   }
 
   onMessage (client, data) {
@@ -82,6 +89,8 @@ class ChatRoom extends Room {
     // if ( this.state.messages.length % 3 == 0 ) {
     //   this.state.messages.push(`${ this.clock.elapsedTime }: even`)
     // }
+
+    //var tl = this.timeline.takeSnapshot(this.state)
   }
 
   onLeave (client) {

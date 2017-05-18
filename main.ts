@@ -11,8 +11,13 @@ var room:Colyseus.Room<any>;
 //game
 var game: Phaser.Game;
 var sprites: Phaser.Group;
+var walls: Phaser.Group;
 var state: any;
+var landscapeCreated:boolean;
+
+//game state
 var players: any;
+
 var nextMoveToServer: number;
 
 var isStopped: boolean;
@@ -66,7 +71,6 @@ function startConnection() {
         for (var id in state.pokemons) {
             //get pokemon linked with player
             var pokemon = state.pokemons[id];
-            let sprite: Phaser.Sprite = players[id];
             if (players[id] == null) {
                 //player not knwon : create new sprite 
                 let sprite : Phaser.Sprite = sprites.getFirstExists(false, true);
@@ -77,15 +81,19 @@ function startConnection() {
                 sprite.frame = pokemon.frame;   //sprite image
                 players[id] = sprite;
             } else {
-                //update location (if sprite is not current player sprite)
-                if (id != client.id) {
-                    var xOffset = pokemon.x - sprite.x;
-                    var yOffset = pokemon.y - sprite.y;
-                    //ease other players movement
-                    game.add.tween(sprite).to({ x: pokemon.x, y: pokemon.y }, 100, Phaser.Easing.Linear.None).start();
-                }
+
             }
+        } // end foreach pokemons
+        //iterate walls
+        if (!landscapeCreated){
+            landscapeCreated = true;
+            state.walls.forEach((element:any) => {
+                var wall = walls.getFirstExists(false, true,element.x , element.y,'wall');
+                
+            });
+            
         }
+
     })
 
     //listen to new entity (pokemon)
@@ -113,9 +121,22 @@ function startConnection() {
     });
 
     //attribute change
-    room.state.listen("pokemons/:id/:attribute", "remove", (id: string, name: string, value: any) => {
-        console.log(`update pokemon attr ${id}  ${name} value = ${value} `);
-        //_this.deletePokemon.dispatch(id);
+    room.state.listen("pokemons/:id/:attribute", "replace", (id: string, name: string, value: any) => {
+        //update location (if sprite is not current player sprite)
+        let sprite:any = players[id];
+        if (id != client.id && sprite != null) {
+            sprite[name] = value;
+            var offset = value - sprite[name];
+            //ease other players movement
+            var move:any = {};
+            move[name] = value;
+            game.add.tween(sprite).to(move, 50, Phaser.Easing.Linear.None).start(); 
+        }
+    });
+
+    //attribute change
+    room.state.listen("walls/:id/:attribute", "replace", (id: string, name: string, value: any) => {
+        console.log(`update wall attr ${id}  ${name} value = ${value} `);
     });
 }
 
@@ -127,16 +148,18 @@ function startConnection() {
 function preload() {
     game.load.image('landscape', './assets/landscape.png');
     game.load.image('pika', 'assets/pika.png');
+    game.load.image('wall', 'assets/wall.png');
     game.load.spritesheet('pokemons', 'assets/pokesprites.png', 96, 96);
 }
 
 //create the game
 function create() {
-    startConnection();
+    
     //start physics
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
     players = {};
+
     cursors = this.game.input.keyboard.createCursorKeys();
 
     game.add.image(0, 0, 'landscape');
@@ -148,11 +171,20 @@ function create() {
     sprites.createMultiple(16, 'pokemons');
     game.physics.enable(sprites, Phaser.Physics.ARCADE);
 
+    walls = this.game.add.group();
+    walls.createMultiple(5,'wall');
+   
+    game.physics.enable(walls, Phaser.Physics.ARCADE);
+    walls.setAll('body.immovable', true);
+    
+    startConnection();
 }
 
 //update game : called at each frame (FPS)
 function update() {
-    const SPRITE_VELOCITY = 150;
+    game.physics.arcade.collide(sprites,walls);
+
+    const SPRITE_VELOCITY = 350;
     let xOffset: number = 0;
     let yOffset: number = 0;
 
@@ -172,21 +204,18 @@ function update() {
         //this.client.action({ action:"stop_velocity" });
     }
 
+    isStopped = true;
     if (xOffset != 0 || yOffset != 0) {
         //this.client.action( { action:"move", x: xOffset, y : yOffset });
         my_sprite.body.velocity.x = xOffset;
         my_sprite.body.velocity.y = yOffset;
         isStopped = false;
-    } else if (!isStopped) {
-        if (my_sprite != null) {
-            //this.client.action({ action:"stop", x:my_sprite.x, y:my_sprite.y });
-        }
-        isStopped = true;
-    }
+    } 
 
+    //send information of current sprite position every 20mms
     if (!isStopped && nextMoveToServer < game.time.now) {
         if (my_sprite != null) client.send({ action: "go", x: my_sprite.x, y: my_sprite.y });
-        nextMoveToServer = game.time.now + 10;
+        nextMoveToServer = game.time.now + 20;
     }
 }
 
