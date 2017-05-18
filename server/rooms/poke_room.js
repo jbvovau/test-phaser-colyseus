@@ -13,11 +13,7 @@ class PokeState {
   }
 }
 
-"use strict";
 class ChatRoom extends Room {
-
-
-
   constructor (options) {
     super( options )
 

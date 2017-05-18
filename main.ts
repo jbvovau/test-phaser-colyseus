@@ -13,7 +13,6 @@ var game: Phaser.Game;
 var sprites: Phaser.Group;
 var state: any;
 var players: any;
-
 var nextMoveToServer: number;
 
 var isStopped: boolean;

@@ -30,5 +30,11 @@ You can launch client using node "http-server".
  
 And then run the web server with HTML5 app with "http-server"
 
-
 The application is available at : http://127.0.0.1:8080
+
+### More
+
+The folder `server` is a modification of `colyseus-starter` (https://github.com/endel/colyseus-starter). The file `poke_room.js` contains server side code.
+
+The game code is available in `main.ts` a file in TypeScript compiled into `main.js` javascript code.
+
