@@ -15,18 +15,18 @@ Download project using git :
 
 Install Colyseus server using npm :
 
- `cd server
- npm install`
+* `cd server`
+* `npm install`
  
 Then start the server
 
- `npm start`
+`npm start`
  
 ### Install and launch client
 
 You can launch client using node "http-server".
 
- `npm install http-server`
+`npm install http-server`
  
 And then run the web server with HTML5 app with "http-server"
 
