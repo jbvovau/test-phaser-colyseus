@@ -13,6 +13,9 @@ Download project using git :
 
  `git clone https://github.com/balmeyer/test-phaser-colyseus`
 
+Move to project
+* `cd test-phaser-colyseus`
+
 Install Colyseus server using npm :
 
 * `cd server`
