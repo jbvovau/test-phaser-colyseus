@@ -11,7 +11,7 @@ Simple template project to test "Colyseus" multiplayers server, with Phaser game
 
 Download project using git :
 
- `git clone https://github.com/balmeyer/test-phaser-colyseus`
+ `git clone https://github.com/jbvovau/test-phaser-colyseus`
 
 Move to project
 * `cd test-phaser-colyseus`
