@@ -16,6 +16,8 @@ Download project using git :
 Move to project
 * `cd test-phaser-colyseus`
 
+Follow : https://docs.colyseus.io/getting-started/server/
+
 Install Colyseus server using npm :
 
 * `cd server`
@@ -23,7 +25,7 @@ Install Colyseus server using npm :
  
 Then start the server
 
-`npm start`
+`npx ts-node index.ts`
  
 ### Install and launch client
 
